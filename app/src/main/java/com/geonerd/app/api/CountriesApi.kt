@@ -6,7 +6,6 @@ import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Url
 
-
 interface CountriesApi {
     @GET("v3.1/all?fields=name,flags,capital")
     suspend fun getAllCountries(): List<Country>

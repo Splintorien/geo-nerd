@@ -8,10 +8,11 @@ class CountryRepository {
     private val api: CountriesApi
 
     init {
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://restcountries.com/")
-            .addConverterFactory(MoshiConverterFactory.create())
-            .build()
+        val retrofit =
+            Retrofit.Builder()
+                .baseUrl("https://restcountries.com/")
+                .addConverterFactory(MoshiConverterFactory.create())
+                .build()
 
         api = retrofit.create(CountriesApi::class.java)
     }
