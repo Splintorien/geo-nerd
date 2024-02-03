@@ -1,28 +1,33 @@
 package com.geonerd.app
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import com.caverock.androidsvg.SVG
 import com.geonerd.app.model.Country
@@ -71,10 +76,18 @@ class DisplayFlagActivity : ComponentActivity() {
                 mutableStateOf<String?>(null)
             }
 
+        val refreshTrigger = remember { mutableIntStateOf(0) }
+
         LaunchedEffect(countryRepository) {
             countries.value = countryRepository.getAllCountries()
-            randomCountry.value = countries.value.random()
-            flagSvg.value = countryRepository.getFlagSvg(randomCountry.value!!.flags.svg)
+            refreshTrigger.intValue++
+        }
+
+        LaunchedEffect(refreshTrigger.intValue) {
+            if (countries.value.isNotEmpty()) {
+                randomCountry.value = countries.value.random()
+                flagSvg.value = countryRepository.getFlagSvg(randomCountry.value!!.flags.svg)
+            }
         }
 
         Column(
@@ -88,46 +101,59 @@ class DisplayFlagActivity : ComponentActivity() {
                     GuessFields(country)
                 }
             }
+            Button(onClick = {
+                refreshTrigger.intValue++
+            }) {
+                Text("Random")
+            }
         }
     }
 
     @Composable
     fun Flag(countryFlag: CountryFlag, flagSvg: String) {
         val context = LocalContext.current
-        val svgImage =
-            remember(flagSvg) {
-                val svg = SVG.getFromString(flagSvg)
-                svg.renderToPicture()
+        val svgPainter = remember(flagSvg) {
+            val svg = SVG.getFromString(flagSvg)
+            val picture = svg.renderToPicture()
+            object : Painter() {
+                override val intrinsicSize: Size
+                    get() = Size(picture.width.toFloat(), picture.height.toFloat())
+
+                override fun DrawScope.onDraw() {
+                    drawIntoCanvas { canvas ->
+                        picture.draw(canvas.nativeCanvas)
+                    }
+                }
             }
+        }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Box {
-                Canvas(modifier = Modifier.fillMaxWidth()) {
-                    drawIntoCanvas { canvas ->
-                        svgImage.draw(canvas.nativeCanvas)
-                    }
-                }
-            }
+            Image(
+                painter = svgPainter,
+                contentDescription = countryFlag.alt,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 
     @Composable
     fun GuessFields(country: Country) {
-        var guessedCountry by remember { mutableStateOf("") }
-        var guessedCapital by remember { mutableStateOf("") }
+        var guessedCountry by remember(country) { mutableStateOf("") }
+        var guessedCapital by remember(country) { mutableStateOf("") }
         var result by remember { mutableStateOf("") }
+        val context = LocalContext.current
 
-        TextField(
+        OutlinedTextField(
             value = guessedCountry,
             onValueChange = { guessedCountry = it },
-            label = { Text("Country name") },
+            label = { Text("Country") },
             modifier = Modifier.fillMaxWidth()
         )
 
-        TextField(
+        OutlinedTextField(
             value = guessedCapital,
             onValueChange = { guessedCapital = it },
             label = { Text("Capital") },
@@ -143,10 +169,9 @@ class DisplayFlagActivity : ComponentActivity() {
             } else {
                 "Incorrect!"
             }
+            Toast.makeText(context, result, Toast.LENGTH_SHORT).show()
         }) {
             Text("Check")
         }
-
-        Text(text = result)
     }
 }
