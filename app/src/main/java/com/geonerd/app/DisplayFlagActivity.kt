@@ -8,13 +8,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -73,9 +77,16 @@ class DisplayFlagActivity : ComponentActivity() {
             flagSvg.value = countryRepository.getFlagSvg(randomCountry.value!!.flags.svg)
         }
 
-        randomCountry.value?.let { country ->
-            flagSvg.value?.let { svg ->
-                Flag(country.flags, svg)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(text = "Guess the country!")
+            randomCountry.value?.let { country ->
+                flagSvg.value?.let { svg ->
+                    Flag(country.flags, svg)
+                    GuessFields(country)
+                }
             }
         }
     }
@@ -93,14 +104,49 @@ class DisplayFlagActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Guess the country!")
             Box {
-                Canvas(modifier = Modifier.fillMaxSize()) {
+                Canvas(modifier = Modifier.fillMaxWidth()) {
                     drawIntoCanvas { canvas ->
                         svgImage.draw(canvas.nativeCanvas)
                     }
                 }
             }
         }
+    }
+
+    @Composable
+    fun GuessFields(country: Country) {
+        var guessedCountry by remember { mutableStateOf("") }
+        var guessedCapital by remember { mutableStateOf("") }
+        var result by remember { mutableStateOf("") }
+
+        TextField(
+            value = guessedCountry,
+            onValueChange = { guessedCountry = it },
+            label = { Text("Country name") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        TextField(
+            value = guessedCapital,
+            onValueChange = { guessedCapital = it },
+            label = { Text("Capital") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Button(onClick = {
+            result = if (
+                guessedCountry.equals(country.name.common, ignoreCase = true) &&
+                guessedCapital.equals(country.capital.first(), ignoreCase = true)
+            ) {
+                "Correct!"
+            } else {
+                "Incorrect!"
+            }
+        }) {
+            Text("Check")
+        }
+
+        Text(text = result)
     }
 }
