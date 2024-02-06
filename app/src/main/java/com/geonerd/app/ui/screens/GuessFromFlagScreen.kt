@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,9 +27,13 @@ fun GuessFromFlagScreen() {
     val country by viewModel.currentCountry.observeAsState(initial = null)
     val flagSvg by viewModel.currentFlagSvg.observeAsState(initial = null)
     val countries by viewModel.countries.observeAsState(initial = emptyList())
+    val countriesNames = remember { mutableListOf<String>() }
+    val countriesCapitals = remember { mutableListOf<String>() }
 
     LaunchedEffect(countries) {
         viewModel.getRandomCountry()
+        countriesNames.addAll(viewModel.getAllCountriesNames())
+        countriesCapitals.addAll(viewModel.getAllCountriesCapitals())
     }
 
     Box {
@@ -39,11 +44,18 @@ fun GuessFromFlagScreen() {
             val localCountry = country
             val localFlagSvg = flagSvg
 
-            Text(text = "Guess the country!")
+            Text(text = "Guess the country and capital!")
 
             if (localCountry is Country && localFlagSvg is String) {
                 FlagSVG(localCountry.flags, localFlagSvg)
-                GuessFields(localCountry)
+                GuessFields(
+                    localCountry,
+                    countriesNames,
+                    countriesCapitals,
+                    onCorrectAnswer = {
+                        viewModel.getRandomCountry()
+                    }
+                )
                 Button(onClick = {
                     viewModel.getRandomCountry()
                 }) {

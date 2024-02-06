@@ -25,6 +25,14 @@ class CountryViewModel(private val countryRepository: CountryRepository) : ViewM
             }
         }
     }
+
+    fun getAllCountriesNames(): List<String> {
+        return countries.value?.map { it.name.common } ?: emptyList()
+    }
+
+    fun getAllCountriesCapitals(): List<String> {
+        return countries.value?.flatMap { it.capital } ?: emptyList()
+    }
 }
 
 class CountryViewModelFactory(
