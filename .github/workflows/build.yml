@@ -59,7 +59,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/release/geo-nerd*.apk
           tag_name: ${{ env.VERSION_TAG }}
           name: Geo Nerd ${{ env.VERSION_TAG }}
           body: |
