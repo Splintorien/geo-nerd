@@ -6,21 +6,45 @@ on:
       - '*'
 
 jobs:
-  Gradle:
+  build:
+    name: Build app
     runs-on: ubuntu-latest
+
     steps:
-      - name: checkout code
-        uses: actions/checkout@v2
-      - name: setup jdk
-        uses: actions/setup-java@v1
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Setup up JDK
+        uses: actions/setup-java@v4
         with:
           java-version: 17
-      - name: Make Gradle executable
-        run: chmod +x ./gradlew
+          distribution: adopt
+
       - name: Build Release APK
-        run: ./gradlew assembleRelease
-      - name: Releasing using Hub
-        uses: r0user/release-apk@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APP_FOLDER: app
+        uses: gradle/gradle-command-action@v2
+        with:
+          arguments: assembleRelease
+
+      - name: Get tag name
+        if: startsWith(github.ref, 'refs/tags/') && github.repository == 'Splintorien/geo-nerd'
+        run: |
+          set -x
+          echo "VERSION_TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+
+      - name: Sign APK
+        if: startsWith(github.ref, 'refs/tags/') && github.repository == 'Splintorien/geo-nerd'
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/apk/standard/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/') && github.repository == 'Splintorien/geo-nerd'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: app/build/outputs/apk/release/app-standard-release.apk
+          tag_name: ${{ env.VERSION_TAG }}
+          token: ${{ secrets.GITHUB_TOKEN }}
