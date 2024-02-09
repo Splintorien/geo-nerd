@@ -20,6 +20,9 @@ jobs:
           java-version: 17
           distribution: adopt
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Build Release APK
         uses: gradle/gradle-command-action@v2
         with:
