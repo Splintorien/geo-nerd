@@ -21,7 +21,8 @@ jobs:
           distribution: adopt
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        run: |
+          ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "build-tools;29.0.3"
 
       - name: Build Release APK
         uses: gradle/gradle-command-action@v2
