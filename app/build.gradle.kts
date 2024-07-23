@@ -74,4 +74,5 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
     implementation("io.coil-kt:coil-compose:1.4.0")
     implementation("com.caverock:androidsvg-aar:1.4")
+    testImplementation("org.mockito:mockito-core:5.10.0")
 }
